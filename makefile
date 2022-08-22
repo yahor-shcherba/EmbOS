@@ -18,7 +18,8 @@ LDFLAGS = \
 
 SRC = \
 	./sys/boot.S \
-	./sys/main.c
+	./sys/main.c \
+	./sys/uart.c
 
 OBJ = $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(SRC)))
 
