@@ -1,5 +1,6 @@
 #include <cpu.h>
 #include <stdint.h>
+#include <string.h>
 
 #define KERNEL_NULL_SELL  0x00
 #define KERNEL_CODE_SELL  0x08
@@ -9,6 +10,12 @@
 #define KERNEL_TYPE_DATA  0x02
 
 #define GDT_ENTRIES       3
+#define IDT_VECTOR_SIZE   256
+
+#define TRAP_GATE         0x8F
+#define INTR_GATE         0x8E
+
+typedef void (*trap_handler)(void);
 
 struct gdt_entry {
   uint32_t limit_low : 16;
@@ -26,13 +33,23 @@ struct gdt_entry {
   uint32_t base_high : 8;
 } __attribute__((packed));
 
+struct idt_entry {
+  uint16_t handler_low;
+  uint16_t sel;
+  uint8_t zero;
+  uint8_t flags;
+  uint16_t handler_high;
+} __attribute__ ((packed));
+
 struct pseudo_desc {
   uint16_t limit;
   uint32_t base;
 } __attribute__((packed));
 
-struct gdt_entry gdt_table[GDT_ENTRIES] = { 0 };
-struct pseudo_desc gdt_desc = { 0, 0 };
+struct gdt_entry gdt_table[GDT_ENTRIES];
+struct idt_entry idt_table[IDT_VECTOR_SIZE];
+struct pseudo_desc gdt_desc;
+struct pseudo_desc idt_desc;
 
 static inline void
 load_gdt(struct pseudo_desc *desc)
@@ -83,8 +100,40 @@ gdt_setup(void)
   load_gdt(&gdt_desc);
 }
 
+static inline void
+load_idt(struct pseudo_desc *desc)
+{
+  __asm__ volatile
+  (
+    "lidt (%0)" : : "a" (desc)
+  );
+}
+
+static inline void
+idt_set_entry(int num_entry, trap_handler handler, uint8_t flags)
+{
+  idt_table[num_entry].handler_low  = (uint32_t) handler & 0xFFFF;
+  idt_table[num_entry].handler_high = ((uint32_t) handler >> 16) & 0xFFFF;
+  idt_table[num_entry].flags        = flags;
+  idt_table[num_entry].sel          = KERNEL_CODE_SELL;
+  idt_table[num_entry].zero         = 0;
+}
+
+static inline void
+idt_setup(void)
+{
+  idt_desc.base = (uint32_t) &idt_table;
+  idt_desc.limit = sizeof(struct idt_entry) * IDT_VECTOR_SIZE - 1; 
+
+  for (int i = 0; i < IDT_VECTOR_SIZE; i++)
+    memset(&idt_table[i], 0, sizeof(struct idt_entry));
+
+  load_idt(&idt_desc);
+}
+
 extern void
 cpu_setup(void)
 {
   gdt_setup();
+  idt_setup();
 }
