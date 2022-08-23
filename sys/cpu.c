@@ -1,8 +1,10 @@
 #include <cpu.h>
+#include <i8259.h>
 #include <traps.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+
 
 #define KERNEL_NULL_SELL  0x00
 #define KERNEL_CODE_SELL  0x08
@@ -174,6 +176,28 @@ init_trap_exceptions(void)
 }
 
 static inline void
+init_irq_vectors(void)
+{
+  idt_set_entry(MASTER_VECTOR_OFFSET + 0, &intr_request_0, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 1, &intr_request_1, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 2, &intr_request_2, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 3, &intr_request_3, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 4, &intr_request_4, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 5, &intr_request_5, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 6, &intr_request_6, INTR_GATE);
+  idt_set_entry(MASTER_VECTOR_OFFSET + 7, &intr_request_7, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 0, &intr_request_8, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 1, &intr_request_9, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 2, &intr_request_10, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 3, &intr_request_11, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 4, &intr_request_12, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 5, &intr_request_13, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 6, &intr_request_14, INTR_GATE);
+  idt_set_entry(SLAVE_VECTOR_OFFSET + 7, &intr_request_15, INTR_GATE);
+}
+
+
+static inline void
 idt_setup(void)
 {
   idt_desc.base = (uint32_t) &idt_table;
@@ -182,7 +206,11 @@ idt_setup(void)
   for (int i = 0; i < IDT_VECTOR_SIZE; i++)
     memset(&idt_table[i], 0, sizeof(struct idt_entry));
 
+  for (int i = 0; i < IRQ_LINES; i++)
+    irq_disable(i);
+
   init_trap_exceptions();
+  init_irq_vectors();
 
   load_idt(&idt_desc);
 }
