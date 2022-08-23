@@ -76,4 +76,21 @@ void trap_exception_18(void);
 void trap_exception_19(void);
 void trap_exception_20(void);
 
+void intr_request_0(void);
+void intr_request_1(void);
+void intr_request_2(void);
+void intr_request_3(void);
+void intr_request_4(void);
+void intr_request_5(void);
+void intr_request_6(void);
+void intr_request_7(void);
+void intr_request_8(void);
+void intr_request_9(void);
+void intr_request_10(void);
+void intr_request_11(void);
+void intr_request_12(void);
+void intr_request_13(void);
+void intr_request_14(void);
+void intr_request_15(void);
+
 #endif /* NOT _TRAPS_H */
