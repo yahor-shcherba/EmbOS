@@ -20,7 +20,8 @@ SRC = \
 	./sys/boot.S \
 	./sys/kernel.c \
 	./sys/mem.c \
-	./sys/uart.c
+	./sys/uart.c \
+	./sys/cpu.c
 
 LIB_SRC = \
 	./libc/stdio.c \
