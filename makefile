@@ -18,7 +18,7 @@ LDFLAGS = \
 
 SRC = \
 	./sys/boot.S \
-	./sys/main.c \
+	./sys/kernel.c \
 	./sys/uart.c
 
 LIB_SRC = \
