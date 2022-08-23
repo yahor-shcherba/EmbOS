@@ -14,6 +14,14 @@ trap_exception_##number:              \
   push $number;                       \
   jmp trap_exception_common
 
+#define IRQ_ROUTINE(number)           \
+.globl intr_request_##number;         \
+intr_request_##number:                \
+  push $number;                       \
+  call irq_main;                      \
+  add $0x4, %esp;                     \
+  iret
+
 trap_exception_common:
   push %eax
   push %ebx
@@ -54,3 +62,20 @@ TRAP_EXCEPTION_ERROR(17)    /* Aligned check */
 TRAP_EXCEPTION(18)          /* Machine Check */
 TRAP_EXCEPTION(19)          /* SIMD Floationg-point Exception */
 TRAP_EXCEPTION(20)          /* Virtualization Exception */
+
+IRQ_ROUTINE(0)              /* timer */
+IRQ_ROUTINE(1)              /* keyboard */
+IRQ_ROUTINE(2)              /* slave pic */
+IRQ_ROUTINE(3)              /* com2 port */
+IRQ_ROUTINE(4)              /* com1 port */
+IRQ_ROUTINE(5)              /* lpt2 port */
+IRQ_ROUTINE(6)              /* floppy device */
+IRQ_ROUTINE(7)              /* lpt1 port */
+IRQ_ROUTINE(8)              /* cmos */
+IRQ_ROUTINE(9)              /* PNP1 port */
+IRQ_ROUTINE(10)             /* PNP2 port */
+IRQ_ROUTINE(11)             /* PNP3 port */
+IRQ_ROUTINE(12)             /* mouse */
+IRQ_ROUTINE(13)             /* coprocessor*/
+IRQ_ROUTINE(14)             /* hard1 */
+IRQ_ROUTINE(15)             /* hard2 */
