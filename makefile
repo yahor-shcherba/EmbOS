@@ -22,6 +22,7 @@ SRC = \
 	./sys/mem.c \
 	./sys/uart.c \
 	./sys/cpu.c \
+	./sys/i8259.c \
 	./sys/traps.S
 
 LIB_SRC = \
