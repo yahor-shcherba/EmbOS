@@ -1,6 +1,8 @@
 #include <cpu.h>
+#include <traps.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 #define KERNEL_NULL_SELL  0x00
 #define KERNEL_CODE_SELL  0x08
@@ -45,6 +47,13 @@ struct pseudo_desc {
   uint16_t limit;
   uint32_t base;
 } __attribute__((packed));
+
+struct trapframe {
+  uint32_t fs, ds, es;
+  uint32_t ebp, edi, esi, edx, ecx, ebx, eax;
+  uint32_t exception_number, error_code;
+  uint32_t eip, cs, eflags, esp, ss;
+};
 
 struct gdt_entry gdt_table[GDT_ENTRIES];
 struct idt_entry idt_table[IDT_VECTOR_SIZE];
@@ -100,6 +109,25 @@ gdt_setup(void)
   load_gdt(&gdt_desc);
 }
 
+extern void
+intr_exception_main(struct trapframe *tp)
+{
+  printf("%s :: error code %d\n",
+    get_exception_message(tp->exception_number), tp->error_code);
+
+  printf("eax : %p ebx : %p ecx : %p edx : %p\n",
+    tp->eax, tp->ebx, tp->ecx, tp->edx);
+
+  printf("esi : %p edi : %p ebp : %p esp : %p\n",
+    tp->esi, tp->edi, tp->ebp, tp->esp);
+
+  printf("cs  : %p ds  : %p ss  : %p es  : %p\n",
+    tp->cs, tp->ds, tp->ss, tp->es);
+
+  printf("fs  : %p gs  : %p eip : %p efl : %p\n",
+    tp->fs, tp->ds, tp->eip, tp->eflags);
+}
+
 static inline void
 load_idt(struct pseudo_desc *desc)
 {
@@ -120,6 +148,32 @@ idt_set_entry(int num_entry, trap_handler handler, uint8_t flags)
 }
 
 static inline void
+init_trap_exceptions(void)
+{
+  idt_set_entry(TRAP_DIV_ERROR, &trap_exception_0, TRAP_GATE);
+  idt_set_entry(TRAP_DBG_EXC, &trap_exception_1, TRAP_GATE);
+  idt_set_entry(TRAP_NMI, &trap_exception_2, TRAP_GATE);
+  idt_set_entry(TRAP_BREAK_PNT, &trap_exception_3, TRAP_GATE);
+  idt_set_entry(TRAP_OVERFLOW, &trap_exception_4, TRAP_GATE);
+  idt_set_entry(TRAP_BOUND_RAGE, &trap_exception_5, TRAP_GATE);
+  idt_set_entry(TRAP_UD2_EXC, &trap_exception_6, TRAP_GATE);
+  idt_set_entry(TRAP_DEV_EXC, &trap_exception_7, TRAP_GATE);
+  idt_set_entry(TRAP_DBL_FAULT, &trap_exception_8, TRAP_GATE);
+  idt_set_entry(TRAP_COP_SEG, &trap_exception_9, TRAP_GATE);
+  idt_set_entry(TRAP_INVLD_TSS, &trap_exception_10, TRAP_GATE);
+  idt_set_entry(TRAP_SNP, &trap_exception_11, TRAP_GATE);
+  idt_set_entry(TRAP_STACK_FAULT, &trap_exception_12, TRAP_GATE);
+  idt_set_entry(TRAP_GNR_PROT, &trap_exception_13, TRAP_GATE);
+  idt_set_entry(TRAP_PAGE_FAULT, &trap_exception_14, TRAP_GATE);
+  idt_set_entry(TRAP_RESERVE, &trap_exception_15, TRAP_GATE);
+  idt_set_entry(TRAP_FPU_ERROR, &trap_exception_16, TRAP_GATE);
+  idt_set_entry(TRAP_ALIGMENT_CHK, &trap_exception_17, TRAP_GATE);
+  idt_set_entry(TRAP_MACHINE_CHK, &trap_exception_18, TRAP_GATE);
+  idt_set_entry(TRAP_SIMD_EXC, &trap_exception_19, TRAP_GATE);
+  idt_set_entry(TRAP_VIRT_EXC, &trap_exception_20, TRAP_GATE);
+}
+
+static inline void
 idt_setup(void)
 {
   idt_desc.base = (uint32_t) &idt_table;
@@ -127,6 +181,8 @@ idt_setup(void)
 
   for (int i = 0; i < IDT_VECTOR_SIZE; i++)
     memset(&idt_table[i], 0, sizeof(struct idt_entry));
+
+  init_trap_exceptions();
 
   load_idt(&idt_desc);
 }
