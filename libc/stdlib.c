@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <mem.h>
 
 extern int
 atoi(const char *s)
@@ -32,4 +33,16 @@ atoi(const char *s)
     }
 
   return n * sign;
+}
+
+extern void*
+malloc(size_t size)
+{
+  return kmalloc(size);
+}
+
+extern void
+free(void *p)
+{
+  kfree(p);
 }
