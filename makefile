@@ -21,6 +21,13 @@ SRC = \
 	./sys/main.c \
 	./sys/uart.c
 
+LIB_SRC = \
+	./libc/stdio.c \
+	./libc/string.c \
+	./libc/stdlib.c
+
+SRC += $(LIB_SRC)
+
 OBJ = $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(SRC)))
 
 BINARY = kernel
