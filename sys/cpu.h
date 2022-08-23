@@ -1,7 +1,7 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#define CPU_ELFAG_IF  0x0200
+#define CPU_EFLAG_IF  0x0200
 
 void cpu_setup(void);
 
@@ -60,7 +60,7 @@ intr_restore(unsigned int eflags)
 static inline int
 intr_enabled(void)
 {
-  return get_eflags() & CPU_FLG_IF;
+  return get_eflags() & CPU_EFLAG_IF;
 }
 
 #endif /* NOT _CPU_H */
