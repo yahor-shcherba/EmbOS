@@ -21,7 +21,8 @@ SRC = \
 	./sys/kernel.c \
 	./sys/mem.c \
 	./sys/uart.c \
-	./sys/cpu.c
+	./sys/cpu.c \
+	./sys/traps.S
 
 LIB_SRC = \
 	./libc/stdio.c \
