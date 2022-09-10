@@ -5,7 +5,7 @@
 
 int atoi(const char *s);
 
-void malloc(size_t size);
+void* malloc(size_t size);
 void free(void *p);
 
 #endif /* NOT _STDLIB_H */
