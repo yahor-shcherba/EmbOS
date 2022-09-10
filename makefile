@@ -24,7 +24,9 @@ SRC = \
 	./sys/cpu.c \
 	./sys/i8259.c \
 	./sys/i8254.c \
-	./sys/traps.S
+	./sys/traps.S \
+	./sys/thread.c \
+	./sys/switch.S
 
 LIB_SRC = \
 	./libc/stdio.c \
