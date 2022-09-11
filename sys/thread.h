@@ -11,6 +11,8 @@ int thread_create(struct thread **thread, size_t stack_size, const char *thread_
 void thread_setup(void);
 
 void thread_yield(void);
+void thread_sleep(void);
+void thread_wakeup(struct thread *thread);
 
 void sheduler_enable(void) __attribute__((noreturn));
 void shedule(void);
