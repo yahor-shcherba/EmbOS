@@ -6,15 +6,35 @@
 #include <thread.h>
 #include <stdio.h>
 
+struct thread *t1, *t2;
+
 void
 test1(void *arg)
 {
   (void) arg;
 
+  printf("thread '%s' - %p\n", thread_name(thread_self()), thread_self());
+
   for (;;)
     {
+      thread_wakeup(t2);
       printf("thread '%s' running \n", thread_name(thread_self()));
-      thread_yield();
+      thread_sleep();
+    }
+}
+
+void
+test2(void *arg)
+{
+  (void) arg;
+
+  printf("thread '%s' - %p\n", thread_name(thread_self()), thread_self());
+
+  for (;;)
+    {
+      thread_sleep();
+      printf("thread '%s' running \n", thread_name(thread_self()));
+      thread_wakeup(t1);
     }
 }
 
@@ -30,11 +50,8 @@ main(void)
 
   printf("Welcome to the EmbOS...\n");
 
-  struct thread *t1, *t2, *t3, *t4;
   thread_create(&t1, 1024, "test1", test1, NULL);
-  thread_create(&t2, 1024, "test2", test1, NULL);
-  thread_create(&t3, 1024, "test3", test1, NULL);
-  thread_create(&t4, 1024, "test4", test1, NULL);
+  thread_create(&t2, 1024, "test2", test2, NULL);
 
   sheduler_enable();
 }

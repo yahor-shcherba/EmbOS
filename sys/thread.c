@@ -22,6 +22,7 @@ struct thread {
   void *stack;
   uint32_t stack_size;
   char name[THREAD_NAME_LENGTH];
+  enum state state;
 
   struct thread *next;
   struct thread *prev;
@@ -84,7 +85,7 @@ shed_runq_get_next(void)
 }
 
 static void
-shed_runq_enqueue(struct thread *thread)
+shed_runq_add(struct thread *thread)
 {
   if (shed_runq_queue_empty())
     {
@@ -100,6 +101,46 @@ shed_runq_enqueue(struct thread *thread)
 
   next->prev = thread;
   thread->next = next;
+}
+
+static void
+shed_runq_remove(struct thread *thread)
+{
+  if (thread == thread->prev)
+    {
+      runq->current = NULL;
+      return;
+    }
+
+  struct thread *prev = thread->prev;
+  struct thread *next = thread->next;
+
+  prev->next = next;
+  next->prev = prev;
+}
+
+static void
+thread_set_state(struct thread *thread, enum state state)
+{
+  thread->state = state;
+}
+
+static bool
+thread_is_running(struct thread *thread)
+{
+  return thread->state == RUNNING;
+}
+
+static bool
+thread_is_sleeping(struct thread *thread)
+{
+  return thread->state == SLEEPING;
+}
+
+static bool
+thread_is_dead(struct thread *thread)
+{
+  return thread->state == DEAD;
 }
 
 static void
@@ -131,15 +172,19 @@ sheduler_enable(void)
 extern void
 shedule(void)
 {
-  struct thread *current = shed_runq_get_current();
-  struct thread *next = shed_runq_get_next();
+  struct thread *prev = shed_runq_get_current();
   uint32_t eflags = 0;
+
+  if (prev != NULL && !thread_is_running(prev))
+    shed_runq_remove(prev);
+
+  struct thread *next = shed_runq_get_next();
 
   assert(next);
   intr_save(&eflags);
 
-  if (current != next)
-    thread_switch_context(current, next);
+  if (prev != next)
+    thread_switch_context(prev, next);
 
   intr_restore(eflags);
 }
@@ -169,6 +214,8 @@ thread_init(struct thread *thread, void *stack, size_t stack_size,
   thread->stack = stack;
   stack_init(thread, stack_size, start_routine, arg);
   thread_set_name(thread, thread_name);
+  thread_set_state(thread, RUNNING);
+
 
   thread->prev = thread;
   thread->next = thread;
@@ -192,7 +239,7 @@ thread_create(struct thread **thread, size_t stack_size, const char *thread_name
     }
 
   thread_init(*thread, stack, stack_size, thread_name, start_routine, arg);
-  shed_runq_enqueue(*thread);
+  shed_runq_add(*thread);
 
   return 0;
 }
@@ -229,5 +276,39 @@ thread_yield(void)
   uint32_t eflags = 0;
   intr_save(&eflags);
   shedule();
+  intr_restore(eflags);
+}
+
+extern void
+thread_sleep(void)
+{
+  struct thread *thread = thread_self();
+  uint32_t eflags = 0;
+
+  intr_save(&eflags);
+  assert(thread_is_running(thread));
+  thread_set_state(thread, SLEEPING);
+  shedule();
+  assert(thread_is_running(thread));
+  intr_restore(eflags);
+}
+
+extern void
+thread_wakeup(struct thread *thread)
+{
+  uint32_t eflags = 0;
+
+  if (!thread || (thread == thread_self()))
+    return;
+
+  intr_save(&eflags);
+
+  if (!thread_is_running(thread))
+    {
+      assert(!thread_is_dead(thread));
+      thread_set_state(thread, RUNNING);
+      shed_runq_add(thread);
+    }
+
   intr_restore(eflags);
 }
