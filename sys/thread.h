@@ -14,6 +14,9 @@ void thread_yield(void);
 void thread_sleep(void);
 void thread_wakeup(struct thread *thread);
 
+void thread_join(struct thread *thread);
+void thread_exit(void);
+
 void sheduler_enable(void) __attribute__((noreturn));
 void shedule(void);
 
