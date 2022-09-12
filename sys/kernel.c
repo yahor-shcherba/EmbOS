@@ -13,29 +13,22 @@ test1(void *arg)
 {
   (void) arg;
 
-  printf("thread '%s' - %p\n", thread_name(thread_self()), thread_self());
-
-  for (;;)
-    {
-      thread_wakeup(t2);
-      printf("thread '%s' running \n", thread_name(thread_self()));
-      thread_sleep();
-    }
+  thread_yield();
+  printf("thread joiner\n");
+  thread_exit();
 }
 
 void
-test2(void *arg)
+main_thread(void *arg)
 {
   (void) arg;
 
-  printf("thread '%s' - %p\n", thread_name(thread_self()), thread_self());
+  struct thread *t1;
+  thread_create(&t1, 1024, "joiner thread", test1, NULL);
+  thread_join(t1);
 
-  for (;;)
-    {
-      thread_sleep();
-      printf("thread '%s' running \n", thread_name(thread_self()));
-      thread_wakeup(t1);
-    }
+  printf("thread '%s' running \n", thread_name(thread_self()));
+  thread_exit();
 }
 
 void
@@ -50,8 +43,7 @@ main(void)
 
   printf("Welcome to the EmbOS...\n");
 
-  thread_create(&t1, 1024, "test1", test1, NULL);
-  thread_create(&t2, 1024, "test2", test2, NULL);
+  thread_create(&t2, 1024, "main thread", main_thread, NULL);
 
   sheduler_enable();
 }

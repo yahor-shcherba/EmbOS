@@ -23,6 +23,7 @@ struct thread {
   uint32_t stack_size;
   char name[THREAD_NAME_LENGTH];
   enum state state;
+  struct thread *joiner;
 
   struct thread *next;
   struct thread *prev;
@@ -52,6 +53,7 @@ thread_main(void (*start_routine)(void*), void *arg)
 {
   assert(start_routine);
   start_routine(arg);
+  thread_exit();
 }
 
 static bool
@@ -129,12 +131,6 @@ static bool
 thread_is_running(struct thread *thread)
 {
   return thread->state == RUNNING;
-}
-
-static bool
-thread_is_sleeping(struct thread *thread)
-{
-  return thread->state == SLEEPING;
 }
 
 static bool
@@ -309,6 +305,42 @@ thread_wakeup(struct thread *thread)
       thread_set_state(thread, RUNNING);
       shed_runq_add(thread);
     }
+
+  intr_restore(eflags);
+}
+
+extern void
+thread_destroy(struct thread *thread)
+{
+  free(thread->stack);
+  free(thread);
+}
+
+extern void
+thread_exit(void)
+{
+  struct thread *thread = thread_self();
+  uint32_t eflags;
+  intr_save(&eflags);
+  assert(thread_is_running(thread));
+  thread_set_state(thread, DEAD);
+  thread_wakeup(thread->joiner);
+  thread_destroy(thread);
+  shedule();
+
+  panic("thread: dead thread is running!\n");
+}
+
+extern void
+thread_join(struct thread *thread)
+{
+  uint32_t eflags = 0;
+  intr_save(&eflags);
+
+  thread->joiner = thread_self();
+
+  while (!thread_is_dead(thread))
+    thread_sleep();
 
   intr_restore(eflags);
 }
