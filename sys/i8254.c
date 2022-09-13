@@ -3,6 +3,7 @@
 #include <io.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <thread.h>
 
 #define DIV_CEIL(n, d) (((n) + (d) - 1) / (d))
 
@@ -21,6 +22,13 @@
 #define INIT_COMMAND \
   (MODE_BINARY | MODE_RATE_GEN | MODE_RW_LSB | MODE_RW_MSB | MODE_COUNTER_0)
 
+static void
+tick(void)
+{
+  outb(0x20, 0x20);
+  thread_yield();
+}
+
 extern void
 i8254_setup(void)
 {
@@ -29,4 +37,6 @@ i8254_setup(void)
 
   outb(PORT_CHANNEL_0, word & 0xFF);
   outb(PORT_CHANNEL_0, word >> 8);
+
+  irq_set_handler(IRQ_TIMER, tick);
 }
