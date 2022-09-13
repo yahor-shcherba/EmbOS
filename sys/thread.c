@@ -3,31 +3,13 @@
 #include <string.h>
 #include <stdbool.h>
 #include <cpu.h>
+#include <i8259.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <panic.h>
 #include <assert.h>
 
-#define THREAD_NAME_LENGTH  30
 #define IDLE_STACK_SIZE     512
-
-enum state {
-  RUNNING,
-  SLEEPING,
-  DEAD
-};
-
-struct thread {
-  void *sp;
-  void *stack;
-  uint32_t stack_size;
-  char name[THREAD_NAME_LENGTH];
-  enum state state;
-  struct thread *joiner;
-
-  struct thread *next;
-  struct thread *prev;
-};
 
 struct shed_runq {
   struct thread *current;
@@ -52,6 +34,8 @@ extern void
 thread_main(void (*start_routine)(void*), void *arg)
 {
   assert(start_routine);
+
+  sti();
   start_routine(arg);
   thread_exit();
 }
@@ -177,12 +161,9 @@ shedule(void)
   struct thread *next = shed_runq_get_next();
 
   assert(next);
-  intr_save(&eflags);
 
   if (prev != next)
     thread_switch_context(prev, next);
-
-  intr_restore(eflags);
 }
 
 static void
@@ -269,10 +250,7 @@ thread_setup(void)
 extern void
 thread_yield(void)
 {
-  uint32_t eflags = 0;
-  intr_save(&eflags);
   shedule();
-  intr_restore(eflags);
 }
 
 extern void

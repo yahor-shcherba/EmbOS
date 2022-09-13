@@ -2,8 +2,27 @@
 #define _THREAD_H
 
 #include <stddef.h>
+#include <stdint.h>
 
-struct thread;
+#define THREAD_NAME_LENGTH  30
+
+enum state {
+  RUNNING,
+  SLEEPING,
+  DEAD
+};
+
+struct thread {
+  void *sp;
+  void *stack;
+  uint32_t stack_size;
+  char name[THREAD_NAME_LENGTH];
+  enum state state;
+  struct thread *joiner;
+
+  struct thread *next;
+  struct thread *prev;
+};
 
 int thread_create(struct thread **thread, size_t stack_size, const char *thread_name,
                   void (*start_routine)(void*), void *arg);
