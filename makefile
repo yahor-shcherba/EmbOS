@@ -26,6 +26,7 @@ SRC = \
 	./sys/i8254.c \
 	./sys/traps.S \
 	./sys/thread.c \
+	./sys/mutex.c \
 	./sys/switch.S
 
 LIB_SRC = \
