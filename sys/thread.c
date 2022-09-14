@@ -153,7 +153,6 @@ extern void
 shedule(void)
 {
   struct thread *prev = shed_runq_get_current();
-  uint32_t eflags = 0;
 
   if (prev != NULL && !thread_is_running(prev))
     shed_runq_remove(prev);
